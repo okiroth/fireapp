@@ -1,17 +1,59 @@
-import Head from 'next/head'
-import Image from 'next/image'
 import styles from '../styles/Home.module.css'
-import Link from 'next/link'
+import { firestore, fromMillis, postToJSON } from '../lib/firebase'
+import { useState } from 'react'
+import PostFeed from '../components/PostFeed'
 import Loader from '../components/Loader'
-import Toaster from 'react-hot-toast'
 
-export default function Home() {
+const LIMIT = 2;
+
+export async function getServerSideProps(context) {
+  const postsQuery = firestore
+    .collectionGroup('posts')
+    .orderBy('createdAt', 'desc')
+    .limit(LIMIT)
+    const posts = (await postsQuery.get()).docs.map(postToJSON);
+
+    return {
+      props: { posts }
+    }
+}
+
+export default function Home(props) {
+  const [posts, setPosts] = useState(props.posts);
+  const [loading, setLoading] = useState(false);
+  const [postsEnd, setPostsEnd] = useState(false);
+
+  const getMorePosts = async () => {
+    setLoading(true);
+    const last = posts[posts.length - 1];
+    const cursor = typeof last.createdAt === 'number' ? fromMillis(last.createdAt) : last.createdAt;
+
+    const query = firestore
+      .collection('posts')
+      .orderBy('published', 'desc')
+      .startAfter(cursor)
+      .limit(1);
+
+    const newPosts = (await query.get()).docs.map(doc => doc.data())
+
+    setPosts(posts.concat(newPosts));
+    setLoading(false);
+
+    if (newPosts.length < LIMIT) { 
+      setPostsEnd(true);
+    }
+  }
+
   return (
     <div className={styles.container}>
-      <h1>Sign Up</h1>
-      <button onClick={() => Toaster.success('Hello You!!!')}>
-        Toaste Me
-      </button>
+      <PostFeed posts={posts} admin={true} />
+
+      {!loading && !postsEnd && <button onClick={getMorePosts}>Load more</button>}
+
+      <Loader show={loading} />
+
+      {postsEnd && 'You have reached the end!'}
+
     </div>
   )
 }
