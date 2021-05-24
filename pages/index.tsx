@@ -4,7 +4,7 @@ import { useState } from 'react'
 import PostFeed from '../components/PostFeed'
 import Loader from '../components/Loader'
 
-const LIMIT = 2;
+const LIMIT = 1;
 
 export async function getServerSideProps(context) {
   const postsQuery = firestore
