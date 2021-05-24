@@ -32,10 +32,13 @@ export async function getUserWithUsername(username:string) {
   return userDoc;
 }
 
+export const serverTimestamp = firebase.firestore.FieldValue.serverTimestamp;
+
+export const increment = firebase.firestore.FieldValue.increment;
+
+
 export function postToJSON(doc) {
   const data = doc.data();
-  console.log({data});
-  
   return {
     ...data,
     // Gotcha! firestore timestamp NOT serializable to JSON. Must convert to milliseconds

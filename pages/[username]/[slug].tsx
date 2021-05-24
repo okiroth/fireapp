@@ -1,6 +1,9 @@
 import { useDocumentData } from 'react-firebase-hooks/firestore';
 import { firestore, getUserWithUsername, postToJSON } from "../../lib/firebase";
 import PostContent from '../../components/PostContent'
+import AuthCheck from '../../components/AuthCheck';
+import Link from 'next/link';
+import HeartButton from '../../components/HeartCount'
 
 export async function getStaticProps({ params }) {
   const { username, slug } = params;
@@ -15,7 +18,15 @@ export async function getStaticProps({ params }) {
       .collection('posts')
       .where('slug', '==', slug)
       .limit(1);
-    post = postToJSON((await query.get()).docs[0]);
+    const postDoc = (await query.get()).docs[0];
+    console.log('POST NOT FOUND', slug, postDoc);
+    
+    if (!postDoc) {
+      return {
+        notFound: true,
+      }
+    }
+    post = postToJSON(postDoc);
     path = `/${username}/${post.slug}`;
   }
 
@@ -57,6 +68,14 @@ export default function Post(props){
         <p>
           <strong>{post.heartCount || 0} &hearts;</strong>
         </p>
+
+      <AuthCheck fallback={
+        <Link href="/enter">Sign Up</Link>
+      }>
+        <HeartButton postRef={postRef}/>
+      </AuthCheck>
+
+
       </aside>
     
     </main>

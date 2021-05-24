@@ -8,6 +8,13 @@ export async function getServerSideProps({ params }) {
   let user = null;
   let posts = null;
 
+  // return 404
+  if (!userDoc) {
+    return {
+      notFound: true,
+    }
+  }
+
   if (userDoc) {
     user = userDoc.data();
     
